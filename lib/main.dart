@@ -42,12 +42,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _login() {
-    // login logic 
+    // login logic
     String username = _usernameController.text;
     String password = _passwordController.text;
     _passwordController.text = username;
     print('Username: $username, Password: $password');
-    
+
     bool loginSuccessful = true; // authentication logic
 
     if (loginSuccessful) {
@@ -61,9 +61,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        
-      ),
+      appBar: AppBar(),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
@@ -72,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Image.asset(
-                'assets/icon_app.png', // Replace with your logo image path
+                'assets/icon_app.png',
                 height: 100,
               ),
               SizedBox(height: 20),
@@ -90,7 +88,9 @@ class _LoginPageState extends State<LoginPage> {
                   labelText: 'Password',
                   prefixIcon: Icon(Icons.lock),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(_obscurePassword
+                        ? Icons.visibility
+                        : Icons.visibility_off),
                     onPressed: _togglePasswordVisibility,
                   ),
                 ),

@@ -10,9 +10,6 @@ class FoodSearchPage extends StatelessWidget {
       body: Column(
         children: [
           // Search input field and button
-          // You can customize this part to fit your search functionality
-          // Example: TextFields, Search Button, Filters, etc.
-
           // Recommended food recipe list
           Expanded(
             child: ListView.builder(
@@ -22,7 +19,7 @@ class FoodSearchPage extends StatelessWidget {
                 return ListTile(
                   title: Text(recipe.title),
                   subtitle: Text(recipe.description),
-                  // Add onTap functionality to navigate to recipe details
+                  // function to navigate to recipe details
                   onTap: () {
                     // Navigate to the recipe details page
                     Navigator.push(
@@ -42,7 +39,7 @@ class FoodSearchPage extends StatelessWidget {
   }
 }
 
-// Define a class for the recommended food recipes
+// class for the recommended food recipes
 class Recipe {
   final String title;
   final String description;
@@ -50,7 +47,7 @@ class Recipe {
   Recipe({required this.title, required this.description});
 }
 
-// Sample data for recommended recipes (replace with your data)
+// Sample data for recommended recipes
 List<Recipe> recommendedRecipes = [
   Recipe(
     title: 'Spaghetti Carbonara',
@@ -60,7 +57,6 @@ List<Recipe> recommendedRecipes = [
     title: 'Chicken Stir-Fry',
     description: 'Quick and easy chicken stir-fry with vegetables.',
   ),
-  // Add more recipe data as needed
 ];
 
 class RecipeDetailsPage extends StatelessWidget {
@@ -85,7 +81,6 @@ class RecipeDetailsPage extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(recipe.description),
-            // Add more details about the recipe as needed
           ],
         ),
       ),

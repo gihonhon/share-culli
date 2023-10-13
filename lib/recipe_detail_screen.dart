@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class RecipeDetailScreen extends StatefulWidget {
   final String name;
   final String imageUrl;
   final double rating;
@@ -22,143 +22,162 @@ class RecipeDetailScreen extends StatelessWidget {
   });
 
   @override
+  _RecipeDetailScreenState createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Recipe $name'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.bookmark_add),
+            tooltip: 'Show Snackbar',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Recipe Save to your Bookmark')));
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.add_comment,
+            ),
+            onPressed: () {},
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
+      body: DefaultTabController(
+        length: 4, // Number of tabs
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Image.network(
-              imageUrl,
-              height: 200,
+              widget.imageUrl,
+              height: 300,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 20.0,
+                bottom: 12.0,
+              ),
               child: Text(
-                name,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                'About the Food',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.yellow),
-                      SizedBox(width: 4),
-                      Text(
-                        rating.toString(),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+              child: Text(
+                widget.aboutFood,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+              ),
+            ),
+            // Create Tab Bar
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: TabBar(
+                tabs: [
+                  Tab(
+                      icon: Icon(
+                    Icons.article_outlined,
+                  )),
+                  Tab(
+                    icon: Icon(
+                      Icons.kitchen_outlined,
+                    ),
                   ),
-                  Text(
-                    'Created by: $creator',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
+                  Tab(
+                    icon: Icon(
+                      Icons.view_list_outlined,
+                    ),
+                  ),
+                  Tab(
+                    icon: Icon(
+                      Icons.speaker_notes_outlined,
                     ),
                   ),
                 ],
+                labelColor: Colors.black,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Created at: $timeCreated',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'About the Food:',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                aboutFood,
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Ingredients:',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: ingredients
-                    .map(
-                      (ingredient) => Text(
-                        '• $ingredient',
-                        style: TextStyle(
-                          fontSize: 18,
-                        ),
+
+            // Create Tab Bar View
+            Expanded(
+              child: TabBarView(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14.0, vertical: 16.0),
+                    child: Text(
+                      widget.aboutFood,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.normal,
                       ),
-                    )
-                    .toList(),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Steps:',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: steps
-                    .asMap()
-                    .entries
-                    .map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Text(
-                          '${entry.key + 1}. ${entry.value}',
-                          style: TextStyle(
-                            fontSize: 18,
-                          ),
+                    ),
+                  ),
+                  // Ingredients Tab
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                    child: ListView(
+                      children: widget.ingredients
+                          .map((ingredient) => ListTile(
+                                title: Text("- $ingredient"),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                  // Steps Tab
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                    child: ListView(
+                      children: widget.steps
+                          .asMap()
+                          .map((index, step) => MapEntry(
+                                index,
+                                ListTile(
+                                  title: Text('Step ${index + 1}: $step'),
+                                ),
+                              ))
+                          .values
+                          .toList(),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                    child: ListView(
+                      children: const [
+                        ListTile(
+                          leading: CircleAvatar(child: Text('A')),
+                          title: Text('Headline'),
+                          subtitle: Text('Supporting text'),
                         ),
-                      ),
-                    )
-                    .toList(),
+                        Divider(height: 0),
+                        ListTile(
+                          leading: CircleAvatar(child: Text('B')),
+                          title: Text('Headline'),
+                          subtitle: Text(
+                              'Longer supporting text to demonstrate how the text wraps and how the leading and trailing widgets are centered vertically with the text.'),
+                        ),
+                        Divider(height: 0),
+                        ListTile(
+                          leading: CircleAvatar(child: Text('C')),
+                          title: Text('Headline'),
+                          subtitle: Text(
+                              "Longer supporting text to demonstrate how the text wraps and how setting 'ListTile.isThreeLine = true' aligns leading and trailing widgets to the top vertically with the text."),
+                          isThreeLine: true,
+                        ),
+                        Divider(height: 0),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

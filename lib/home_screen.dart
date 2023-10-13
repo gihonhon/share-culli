@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'food_data.dart';
+import 'getFoodList.dart'; // Import your ApiService class
 import 'search_result.dart';
 import 'recipe_detail_screen.dart';
 
@@ -9,7 +9,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String searchQuery = ''; // State variable to store the search query
+  final GetFoodList getFoodList =
+      GetFoodList('https://639b216231877e43d6835f40.mockapi.io/linkedin/food');
+  String searchQuery = ''; // store the search query
 
   @override
   Widget build(BuildContext context) {
@@ -40,40 +42,64 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 IconButton(
                   icon: Icon(Icons.search),
-                  onPressed: () {
-                    // Trigger navigation to search results screen here
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => SearchResultScreen(
-                          searchResults: foodRecipes
-                              .where((recipe) => recipe['name']
-                                  .toLowerCase()
-                                  .contains(searchQuery.toLowerCase()))
-                              .toList(),
+                  onPressed: () async {
+                    try {
+                      // Fetch data from the API based on the search query
+                      List<Map<String, dynamic>> searchResults =
+                          await getFoodList.fetchData();
+                      searchResults = searchResults
+                          .where((recipe) => recipe['name']
+                              .toLowerCase()
+                              .contains(searchQuery.toLowerCase()))
+                          .toList();
+
+                      // Navigate to search results screen
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => SearchResultScreen(
+                            searchResults: searchResults,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    } catch (e) {
+                      // Handle errors, e.g., show an error message
+                      print('Error fetching data: $e');
+                    }
                   },
                 ),
               ],
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              itemCount: foodRecipes.length,
-              itemBuilder: (context, index) {
-                final recipe = foodRecipes[index];
-                return FoodRecipeCard(
-                  name: recipe['name'] ?? '',
-                  imageUrl: recipe['imageUrl'] ?? '',
-                  rating: recipe['rating'] ?? '',
-                  creator: recipe['creator'] ?? '',
-                  timeCreated: recipe['timeCreated'] ?? '',
-                  steps: recipe['steps'] ?? '',
-                  aboutFood: recipe['about_food'] ?? '',
-                  ingredients: recipe['ingredients'] ?? '',
-                );
+            child: FutureBuilder(
+              future: getFoodList.fetchData(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  List<Map<String, dynamic>> foodRecipes =
+                      snapshot.data as List<Map<String, dynamic>>;
+
+                  return ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: foodRecipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = foodRecipes[index];
+                      return FoodRecipeCard(
+                        name: recipe['name'] ?? '',
+                        imageUrl: recipe['imageUrl'] ?? '',
+                        rating: recipe['rating'] ?? '',
+                        creator: recipe['creator'] ?? '',
+                        timeCreated: recipe['timeCreated'] ?? '',
+                        steps: recipe['steps'] ?? [],
+                        aboutFood: recipe['about_food'] ?? '',
+                        ingredients: recipe['ingredients'] ?? [],
+                      );
+                    },
+                  );
+                }
               },
             ),
           ),
@@ -89,9 +115,9 @@ class FoodRecipeCard extends StatelessWidget {
   final double rating;
   final String creator;
   final String timeCreated;
-  final List<String> steps;
+  final List<dynamic> steps; // Change to List<dynamic>
   final String aboutFood;
-  final List<String> ingredients;
+  final List<dynamic> ingredients; // Change to List<dynamic>
 
   FoodRecipeCard({
     required this.name,
@@ -117,14 +143,19 @@ class FoodRecipeCard extends StatelessWidget {
               rating: rating,
               creator: creator,
               timeCreated: timeCreated,
-              steps: steps,
+              steps: steps
+                  .map((step) => step.toString())
+                  .toList(), // Convert to List<String>
               aboutFood: aboutFood,
-              ingredients: ingredients,
+              ingredients: ingredients
+                  .map((ingredient) => ingredient.toString())
+                  .toList(), // Convert to List<String>
             ),
           ),
         );
       },
       child: Card(
+        margin: EdgeInsets.symmetric(vertical: 10.0),
         elevation: 2,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,20 +167,18 @@ class FoodRecipeCard extends StatelessWidget {
               fit: BoxFit.cover,
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                name,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   Row(
                     children: [
                       Icon(Icons.star, color: Colors.yellow),
@@ -163,24 +192,23 @@ class FoodRecipeCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                ],
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Text(
-                    'Created by: $creator',
+                    'By: $creator on $timeCreated',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
                     ),
                   ),
                 ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                '$timeCreated',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
               ),
             ),
           ],

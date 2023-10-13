@@ -1,6 +1,68 @@
+import 'package:flutter/material.dart';
 
-final List<Map<String, dynamic>> foodRecipes = [
-  {
+class BookmarkScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Bookmarked Recipes'),
+      ),
+      body: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 8.0,
+          mainAxisSpacing: 8.0,
+        ),
+        itemCount: bookmarkedRecipes.length,
+        itemBuilder: (context, index) {
+          final recipe = bookmarkedRecipes[index];
+          return InkWell(
+            onTap: () {
+              // Navigate to the detail screen or perform other actions
+            },
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
+                    ),
+                    child: Image.network(
+                      recipe['imageUrl'],
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      recipe['name'],
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Assuming you have a list of bookmarked recipes
+final List<Map<String, dynamic>> bookmarkedRecipes = [
+    {
     'name': 'Spaghetti Carbonara',
     'imageUrl': 'https://www.culinaryhill.com/wp-content/uploads/2021/12/Spaghetti-Carbonara-Culinary-Hill-1200x800-1.jpg',
     'rating': 4.5, 

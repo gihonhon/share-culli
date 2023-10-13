@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'bookmark_screen.dart';
+import 'create_recipe_screen.dart';
+import 'user_profile.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -14,26 +17,11 @@ class _MainScreenState extends State<MainScreen> {
     // Home Tab
     HomeScreen(),
     // Bookmarks Tab
-    Scaffold(
-      appBar: AppBar(
-        title: Text('Bookmarks'),
-      ),
-      body: Container()
-    ),
+    BookmarkScreen(),
     // Create Recipe Tab
-    Scaffold(
-      appBar: AppBar(
-        title: Text('Create Recipe'),
-      ),
-      body: Container()
-    ),
+    CreateRecipeScreen(),
     // Profile Tab
-    Scaffold(
-      appBar: AppBar(
-        title: Text('Profile'),
-      ),
-      body: Container()
-    ),
+    UserProfileScreen(),
   ];
 
   @override
