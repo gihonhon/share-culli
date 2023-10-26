@@ -1,16 +1,21 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'getFoodList.dart'; // Import your ApiService class
 import 'search_result.dart';
 import 'recipe_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   final GetFoodList getFoodList =
-      GetFoodList('https://639b216231877e43d6835f40.mockapi.io/linkedin/food');
+      GetFoodList('https://fine-pink-badger-yoke.cyclic.app/recipes');
   String searchQuery = ''; // store the search query
 
   @override
@@ -18,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Culinary Share'),
+        title: const Text('Culinary Share'),
       ),
       body: Column(
         children: [
@@ -28,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Search Recipes',
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(),
@@ -41,17 +46,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   onPressed: () async {
                     try {
                       // Fetch data from the API based on the search query
-                      List<Map<String, dynamic>> searchResults =
-                          await getFoodList.fetchData();
-                      searchResults = searchResults
-                          .where((recipe) => recipe['name']
-                              .toLowerCase()
-                              .contains(searchQuery.toLowerCase()))
-                          .toList();
+                      List<
+                          Map<String, dynamic>> searchResults = await GetFoodList(
+                              'https://fine-pink-badger-yoke.cyclic.app/search/recipes/$searchQuery')
+                          .fetchData();
 
                       // Navigate to search results screen
                       Navigator.of(context).push(
@@ -75,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
               future: getFoodList.fetchData(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return const CircularProgressIndicator();
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else {
@@ -83,18 +85,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       snapshot.data as List<Map<String, dynamic>>;
 
                   return ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: foodRecipes.length,
                     itemBuilder: (context, index) {
                       final recipe = foodRecipes[index];
                       return FoodRecipeCard(
-                        name: recipe['name'] ?? '',
-                        imageUrl: recipe['imageUrl'] ?? '',
-                        rating: recipe['rating'] ?? '',
-                        creator: recipe['creator'] ?? '',
-                        timeCreated: recipe['timeCreated'] ?? '',
-                        steps: recipe['steps'] ?? [],
-                        aboutFood: recipe['about_food'] ?? '',
+                        name: recipe['recipe_name'] ?? '',
+                        imageUrl: recipe['picture'] ?? '',
+                        rating: recipe['average_ratings'] ?? 0.0,
+                        creator: recipe['user']['username'] ?? '',
+                        timeCreated: DateTime.parse(recipe['createdAt'] ?? ''),
+                        steps: recipe['instruction'] ?? [],
+                        aboutFood: recipe['desc'] ?? '',
                         ingredients: recipe['ingredients'] ?? [],
                       );
                     },
@@ -114,12 +116,13 @@ class FoodRecipeCard extends StatelessWidget {
   final String imageUrl;
   final double rating;
   final String creator;
-  final String timeCreated;
+  final DateTime timeCreated;
   final List<dynamic> steps; // Change to List<dynamic>
   final String aboutFood;
   final List<dynamic> ingredients; // Change to List<dynamic>
 
-  FoodRecipeCard({
+  const FoodRecipeCard({
+    Key? key,
     required this.name,
     required this.imageUrl,
     required this.rating,
@@ -128,7 +131,12 @@ class FoodRecipeCard extends StatelessWidget {
     required this.steps,
     required this.aboutFood,
     required this.ingredients,
-  });
+  }) : super(key: key);
+
+  String formattedDate() {
+    final dateFormat = DateFormat('dd MMMM y');
+    return dateFormat.format(timeCreated);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,22 +148,20 @@ class FoodRecipeCard extends StatelessWidget {
             builder: (context) => RecipeDetailScreen(
               name: name,
               imageUrl: imageUrl,
-              rating: rating,
+              rating: rating.toString(),
               creator: creator,
               timeCreated: timeCreated,
-              steps: steps
-                  .map((step) => step.toString())
-                  .toList(), // Convert to List<String>
+              steps: steps.map((step) => step.toString()).toList(),
               aboutFood: aboutFood,
               ingredients: ingredients
                   .map((ingredient) => ingredient.toString())
-                  .toList(), // Convert to List<String>
+                  .toList(),
             ),
           ),
         );
       },
       child: Card(
-        margin: EdgeInsets.symmetric(vertical: 10.0),
+        margin: const EdgeInsets.symmetric(vertical: 10.0),
         elevation: 2,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,18 +180,18 @@ class FoodRecipeCard extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Row(
                     children: [
-                      Icon(Icons.star, color: Colors.yellow),
-                      SizedBox(width: 4),
+                      const Icon(Icons.star, color: Colors.yellow),
+                      const SizedBox(width: 4),
                       Text(
                         rating.toString(),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -202,8 +208,8 @@ class FoodRecipeCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'By: $creator on $timeCreated',
-                    style: TextStyle(
+                    'By: $creator on ${formattedDate()}',
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
                     ),

@@ -1,16 +1,21 @@
-import 'package:flutter/material.dart';
+import 'dart:ffi';
 
-class RecipeDetailScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'home_screen.dart';
+import 'package:intl/intl.dart';
+
+class RecipeDetailScreen extends StatelessWidget {
   final String name;
   final String imageUrl;
-  final double rating;
+  final String rating;
   final String creator;
-  final String timeCreated;
+  final DateTime timeCreated;
   final List<String> steps;
   final String aboutFood;
   final List<String> ingredients;
 
-  RecipeDetailScreen({
+  const RecipeDetailScreen({
+    Key? key,
     required this.name,
     required this.imageUrl,
     required this.rating,
@@ -19,13 +24,13 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.steps,
     required this.aboutFood,
     required this.ingredients,
-  });
+  }) : super(key: key);
 
-  @override
-  _RecipeDetailScreenState createState() => _RecipeDetailScreenState();
-}
+  String formattedDate() {
+    final dateFormat = DateFormat('dd MMMM y');
+    return dateFormat.format(timeCreated);
+  }
 
-class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,115 +41,112 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             tooltip: 'Show Snackbar',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Recipe Save to your Bookmark')));
+                  content: Text('Recipe Saved to your Bookmarks')));
             },
           ),
           IconButton(
-            icon: Icon(
-              Icons.add_comment,
-            ),
+            icon: const Icon(Icons.add_comment),
             onPressed: () {},
           ),
         ],
       ),
       body: DefaultTabController(
-        length: 4, // Number of tabs
+        length: 4,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Image.network(
-              widget.imageUrl,
+              imageUrl,
               height: 300,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
-            Padding(
-              padding: const EdgeInsets.only(
-                left: 16.0,
-                right: 16.0,
-                top: 20.0,
-                bottom: 12.0,
-              ),
-              child: Text(
-                'About the Food',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: 16.0,
+                    right: 16.0,
+                    top: 20.0,
+                    bottom: 12.0,
+                  ),
+                  child: Text(name,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: 16.0,
+                    right: 16.0,
+                    top: 20.0,
+                    bottom: 12.0,
+                  ),
+                  child: Text(rating,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                )
+              ],
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                widget.aboutFood,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+                'by $creator on ${formattedDate()}',
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.normal),
               ),
             ),
-            // Create Tab Bar
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               child: TabBar(
                 tabs: [
-                  Tab(
-                      icon: Icon(
-                    Icons.article_outlined,
-                  )),
-                  Tab(
-                    icon: Icon(
-                      Icons.kitchen_outlined,
-                    ),
-                  ),
-                  Tab(
-                    icon: Icon(
-                      Icons.view_list_outlined,
-                    ),
-                  ),
-                  Tab(
-                    icon: Icon(
-                      Icons.speaker_notes_outlined,
-                    ),
-                  ),
+                  Tab(icon: Icon(Icons.article_outlined)),
+                  Tab(icon: Icon(Icons.kitchen_outlined)),
+                  Tab(icon: Icon(Icons.view_list_outlined)),
+                  Tab(icon: Icon(Icons.speaker_notes_outlined)),
                 ],
                 labelColor: Colors.black,
               ),
             ),
-
-            // Create Tab Bar View
             Expanded(
               child: TabBarView(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14.0, vertical: 16.0),
+                      horizontal: 14.0,
+                      vertical: 16.0,
+                    ),
                     child: Text(
-                      widget.aboutFood,
-                      style: TextStyle(
+                      aboutFood,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.normal,
                       ),
                     ),
                   ),
-                  // Ingredients Tab
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14.0),
                     child: ListView(
-                      children: widget.ingredients
+                      children: ingredients
                           .map((ingredient) => ListTile(
                                 title: Text("- $ingredient"),
                               ))
                           .toList(),
                     ),
                   ),
-                  // Steps Tab
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14.0),
                     child: ListView(
-                      children: widget.steps
+                      children: steps
                           .asMap()
-                          .map((index, step) => MapEntry(
-                                index,
-                                ListTile(
-                                  title: Text('Step ${index + 1}: $step'),
-                                ),
-                              ))
+                          .map(
+                            (index, step) => MapEntry(
+                              index,
+                              ListTile(
+                                title: Text('Step ${index + 1}: $step'),
+                              ),
+                            ),
+                          )
                           .values
                           .toList(),
                     ),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 class FoodSearchPage extends StatelessWidget {
+  const FoodSearchPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Food Recipes'),
+        title: const Text('Food Recipes'),
       ),
       body: Column(
         children: [
@@ -62,7 +64,7 @@ List<Recipe> recommendedRecipes = [
 class RecipeDetailsPage extends StatelessWidget {
   final Recipe recipe;
 
-  RecipeDetailsPage({required this.recipe});
+  const RecipeDetailsPage({super.key, required this.recipe});
 
   @override
   Widget build(BuildContext context) {
@@ -75,11 +77,11 @@ class RecipeDetailsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Description:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(recipe.description),
           ],
         ),
