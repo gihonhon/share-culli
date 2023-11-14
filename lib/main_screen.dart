@@ -4,9 +4,11 @@ import 'home_screen.dart';
 import 'bookmark_screen.dart';
 import 'create_recipe_screen.dart';
 import 'user_profile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({Key? key}) : super(key: key);
 
   @override
   _MainScreenState createState() => _MainScreenState();
@@ -14,18 +16,42 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  Map<String, dynamic>? userData;
+  late ScreensList _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch and display user data from storage
+    fetchAndDisplayUserData();
+    _screens = ScreensList(userData: userData);
+  }
+
+  Future<void> fetchAndDisplayUserData() async {
+    userData = await getStoredUserData();
+    setState(() {});
+  }
+
+  Future<Map<String, dynamic>?> getStoredUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userDataString = prefs.getString('userData');
+    if (userDataString != null) {
+      return json.decode(userDataString);
+    }
+    return null;
+  }
 
   // screens for each tab
-  final List<Widget> _screens = [
-    // Home Tab
-    const HomeScreen(),
-    // Bookmarks Tab
-    const BookmarkScreen(),
-    // Create Recipe Tab
-    const CreateRecipeScreen(),
-    // Profile Tab
-    const UserProfileScreen(),
-  ];
+  // final List<Widget> _screens = [
+  //   // Home Tab
+  //   const HomeScreen(),
+  //   // Bookmarks Tab
+  //   BookmarkScreen(userID: userData!.['id'],),
+  //   // Create Recipe Tab
+  //   const CreateRecipeScreen(),
+  //   // Profile Tab
+  //   const UserProfileScreen(),
+  // ];
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +67,7 @@ class _MainScreenState extends State<MainScreen> {
         return false;
       },
       child: Scaffold(
-        body: _screens[_currentIndex], // Display the selected screen
+        body: _screens.getScreen(_currentIndex), // Display the selected screen
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: Colors.redAccent,
           elevation: 0,
@@ -79,5 +105,24 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
     );
+  }
+}
+
+class ScreensList {
+  final Map<String, dynamic>? userData;
+
+  ScreensList({required this.userData});
+
+  List<Widget> getScreens() {
+    return [
+      const HomeScreen(),
+      BookmarkScreen(userID: userData?['id'] ?? ''),
+      const CreateRecipeScreen(),
+      const UserProfileScreen(),
+    ];
+  }
+
+  Widget getScreen(int index) {
+    return getScreens()[index];
   }
 }

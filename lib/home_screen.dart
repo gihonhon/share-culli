@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'getFoodList.dart'; // Import your ApiService class
 import 'search_result.dart';
@@ -18,6 +16,14 @@ class _HomeScreenState extends State<HomeScreen> {
       GetFoodList('https://fine-pink-badger-yoke.cyclic.app/recipes');
   String searchQuery = ''; // store the search query
 
+  // Function to refresh data
+  Future<void> refreshData() async {
+    setState(() {
+      // You can reset or re-fetch your data here
+      // For example, you can call getFoodList.fetchData() again to refresh the data.
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,93 +31,98 @@ class _HomeScreenState extends State<HomeScreen> {
         automaticallyImplyLeading: false,
         title: const Text('Culinary Share'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Search Recipes',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
+      body: RefreshIndicator(
+        onRefresh: refreshData,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Search Recipes',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
                         searchQuery = value;
-                      });
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () async {
+                      try {
+                        // Fetch data from the API based on the search query
+                        List<Map<String, dynamic>> searchResults =
+                            await GetFoodList(
+                                    'https://fine-pink-badger-yoke.cyclic.app/search/recipes/$searchQuery')
+                                .fetchData();
+
+                        // Navigate to search results screen
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => SearchResultScreen(
+                              searchResults: searchResults,
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        // Handle errors, e.g., show an error message
+                        print('Error fetching data: $e');
+                      }
                     },
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () async {
-                    try {
-                      // Fetch data from the API based on the search query
-                      List<
-                          Map<String, dynamic>> searchResults = await GetFoodList(
-                              'https://fine-pink-badger-yoke.cyclic.app/search/recipes/$searchQuery')
-                          .fetchData();
-
-                      // Navigate to search results screen
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SearchResultScreen(
-                            searchResults: searchResults,
-                          ),
-                        ),
-                      );
-                    } catch (e) {
-                      // Handle errors, e.g., show an error message
-                      print('Error fetching data: $e');
-                    }
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: FutureBuilder(
-              future: getFoodList.fetchData(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else {
-                  List<Map<String, dynamic>> foodRecipes =
-                      snapshot.data as List<Map<String, dynamic>>;
+            Expanded(
+              child: FutureBuilder(
+                future: getFoodList.fetchData(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    List<Map<String, dynamic>> foodRecipes =
+                        snapshot.data as List<Map<String, dynamic>>;
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: foodRecipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = foodRecipes[index];
-                      return FoodRecipeCard(
-                        name: recipe['recipe_name'] ?? '',
-                        imageUrl: recipe['picture'] ?? '',
-                        rating: recipe['average_ratings'] ?? 0.0,
-                        creator: recipe['user']['username'] ?? '',
-                        timeCreated: DateTime.parse(recipe['createdAt'] ?? ''),
-                        steps: recipe['instruction'] ?? [],
-                        aboutFood: recipe['desc'] ?? '',
-                        ingredients: recipe['ingredients'] ?? [],
-                      );
-                    },
-                  );
-                }
-              },
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: foodRecipes.length,
+                      itemBuilder: (context, index) {
+                        final recipe = foodRecipes[index];
+                        return FoodRecipeCard(
+                          id: recipe['id'],
+                          name: recipe['recipe_name'] ?? '',
+                          imageUrl: recipe['picture'] ?? '',
+                          rating:
+                              (recipe?['average_ratings'] ?? 0.0).toDouble(),
+                          creator: recipe['user']['username'] ?? '',
+                          timeCreated:
+                              DateTime.parse(recipe['createdAt'] ?? ''),
+                          steps: recipe['instruction'] ?? [],
+                          aboutFood: recipe['desc'] ?? '',
+                          ingredients: recipe['ingredients'] ?? [],
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class FoodRecipeCard extends StatelessWidget {
+  final String id;
   final String name;
   final String imageUrl;
   final double rating;
@@ -123,6 +134,7 @@ class FoodRecipeCard extends StatelessWidget {
 
   const FoodRecipeCard({
     Key? key,
+    required this.id,
     required this.name,
     required this.imageUrl,
     required this.rating,
@@ -146,6 +158,7 @@ class FoodRecipeCard extends StatelessWidget {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => RecipeDetailScreen(
+              id: id,
               name: name,
               imageUrl: imageUrl,
               rating: rating.toString(),
@@ -223,3 +236,5 @@ class FoodRecipeCard extends StatelessWidget {
     );
   }
 }
+
+// Rest of your code...

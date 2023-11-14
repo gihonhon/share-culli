@@ -17,6 +17,7 @@ class SearchResultScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final recipe = searchResults[index];
           return FoodRecipeCard(
+            id: recipe['id'],
             name: recipe['recipe_name'] ??
                 '', // Use 'recipe_name' instead of 'name'
             imageUrl:

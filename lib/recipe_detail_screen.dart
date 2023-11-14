@@ -1,10 +1,26 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'add_comment.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class Comment {
+  final String id;
+  final String userID;
+  final String content;
+  final DateTime createdAt;
+
+  Comment({
+    required this.id,
+    required this.userID,
+    required this.content,
+    required this.createdAt,
+  });
+}
+
+class RecipeDetailScreen extends StatefulWidget {
+  final String id;
   final String name;
   final String imageUrl;
   final String rating;
@@ -14,8 +30,8 @@ class RecipeDetailScreen extends StatelessWidget {
   final String aboutFood;
   final List<String> ingredients;
 
-  const RecipeDetailScreen({
-    Key? key,
+  RecipeDetailScreen({
+    required this.id,
     required this.name,
     required this.imageUrl,
     required this.rating,
@@ -24,11 +40,115 @@ class RecipeDetailScreen extends StatelessWidget {
     required this.steps,
     required this.aboutFood,
     required this.ingredients,
-  }) : super(key: key);
+  });
+
+  @override
+  _RecipeDetailScreenState createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+  Map<String, dynamic>? userData;
+  List<Comment> comments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchComments();
+    fetchAndDisplayUserData();
+  }
+
+  Future<void> fetchAndDisplayUserData() async {
+    userData = await getStoredUserData();
+    setState(() {});
+  }
+
+  Future<Map<String, dynamic>?> getStoredUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userDataString = prefs.getString('userData');
+    if (userDataString != null) {
+      return json.decode(userDataString);
+    }
+    return null;
+  }
 
   String formattedDate() {
     final dateFormat = DateFormat('dd MMMM y');
-    return dateFormat.format(timeCreated);
+    return dateFormat.format(widget.timeCreated);
+  }
+
+  String commentFormattedDate(DateTime createdAt) {
+    final dateFormat = DateFormat('dd MMMM y');
+    return dateFormat.format(createdAt);
+  }
+
+  Future<void> _fetchComments() async {
+    final response = await http.get(
+      Uri.parse(
+          'https://fine-pink-badger-yoke.cyclic.app/comments/${widget.id}'),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = json.decode(response.body);
+      final fetchedComments = jsonList.map((json) {
+        return Comment(
+          id: json['id'],
+          userID: json['userID'],
+          content: json['comment_content'],
+          createdAt: DateTime.parse(json['createdAt']),
+        );
+      }).toList();
+
+      setState(() {
+        comments = fetchedComments;
+      });
+    }
+  }
+
+  Future<void> _refreshData() async {
+    await _fetchComments();
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Data refreshed!'),
+    ));
+  }
+
+  void navigateToAddCommentScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AddCommentScreen(widget.id),
+      ),
+    );
+  }
+
+  Future<void> addBookmark() async {
+    // Define the URL for adding a bookmark
+    final url = 'https://fine-pink-badger-yoke.cyclic.app/bookmarks';
+    final userId = userData!['id'];
+
+    final Map<String, dynamic> bookmarkData = {
+      'userID': userId,
+      'recipeID': widget.id,
+    };
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(bookmarkData),
+    );
+
+    if (response.statusCode == 201) {
+      // Bookmark added successfully
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Recipe added to your bookmarks!'),
+      ));
+    }
+    if (response.statusCode == 400) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Recipe already in your bookmarks!'),
+      ));
+    } else {
+      // Handle any error cases here
+      print('Failed to add bookmark: ${response.statusCode}');
+    }
   }
 
   @override
@@ -40,13 +160,14 @@ class RecipeDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.bookmark_add),
             tooltip: 'Show Snackbar',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Recipe Saved to your Bookmarks')));
+              addBookmark();
             },
           ),
           IconButton(
             icon: const Icon(Icons.add_comment),
-            onPressed: () {},
+            onPressed: () {
+              navigateToAddCommentScreen(context);
+            },
           ),
         ],
       ),
@@ -56,7 +177,7 @@ class RecipeDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Image.network(
-              imageUrl,
+              widget.imageUrl,
               height: 300,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -71,7 +192,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     top: 20.0,
                     bottom: 12.0,
                   ),
-                  child: Text(name,
+                  child: Text(widget.name,
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 ),
@@ -82,7 +203,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     top: 20.0,
                     bottom: 12.0,
                   ),
-                  child: Text(rating,
+                  child: Text(widget.rating,
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 )
@@ -91,7 +212,7 @@ class RecipeDetailScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                'by $creator on ${formattedDate()}',
+                'by ${widget.creator} on ${formattedDate()}',
                 style: const TextStyle(
                     fontSize: 16, fontWeight: FontWeight.normal),
               ),
@@ -109,77 +230,63 @@ class RecipeDetailScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: TabBarView(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14.0,
-                      vertical: 16.0,
-                    ),
-                    child: Text(
-                      aboutFood,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.normal,
+              child: RefreshIndicator(
+                onRefresh: _refreshData,
+                child: TabBarView(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14.0,
+                        vertical: 16.0,
+                      ),
+                      child: Text(
+                        widget.aboutFood,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.normal,
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                    child: ListView(
-                      children: ingredients
-                          .map((ingredient) => ListTile(
-                                title: Text("- $ingredient"),
-                              ))
-                          .toList(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      child: ListView(
+                        children: widget.ingredients
+                            .map((ingredient) => ListTile(
+                                  title: Text("- $ingredient"),
+                                ))
+                            .toList(),
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                    child: ListView(
-                      children: steps
-                          .asMap()
-                          .map(
-                            (index, step) => MapEntry(
-                              index,
-                              ListTile(
-                                title: Text('Step ${index + 1}: $step'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      child: ListView(
+                        children: widget.steps
+                            .asMap()
+                            .map(
+                              (index, step) => MapEntry(
+                                index,
+                                ListTile(
+                                  title: Text('Step ${index + 1}: $step'),
+                                ),
                               ),
-                            ),
-                          )
-                          .values
-                          .toList(),
+                            )
+                            .values
+                            .toList(),
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                    child: ListView(
-                      children: const [
-                        ListTile(
-                          leading: CircleAvatar(child: Text('A')),
-                          title: Text('Headline'),
-                          subtitle: Text('Supporting text'),
-                        ),
-                        Divider(height: 0),
-                        ListTile(
-                          leading: CircleAvatar(child: Text('B')),
-                          title: Text('Headline'),
+                    ListView.builder(
+                      itemCount: comments.length,
+                      itemBuilder: (context, index) {
+                        Comment comment = comments[index];
+                        return ListTile(
+                          title: Text(comment.content),
                           subtitle: Text(
-                              'Longer supporting text to demonstrate how the text wraps and how the leading and trailing widgets are centered vertically with the text.'),
-                        ),
-                        Divider(height: 0),
-                        ListTile(
-                          leading: CircleAvatar(child: Text('C')),
-                          title: Text('Headline'),
-                          subtitle: Text(
-                              "Longer supporting text to demonstrate how the text wraps and how setting 'ListTile.isThreeLine = true' aligns leading and trailing widgets to the top vertically with the text."),
-                          isThreeLine: true,
-                        ),
-                        Divider(height: 0),
-                      ],
-                    ),
-                  ),
-                ],
+                              'Posted on ${commentFormattedDate(comment.createdAt)}'),
+                        );
+                      },
+                    )
+                  ],
+                ),
               ),
             ),
           ],

@@ -32,12 +32,47 @@ class CreateRecipeForm extends StatefulWidget {
 
 class _CreateRecipeFormState extends State<CreateRecipeForm> {
   Map<String, dynamic>? userData;
+  List<Map<String, dynamic>> categories = [];
+  final TextEditingController nameController = TextEditingController();
+  File? selectedImageFile; // Variable to store the selected image file
+  final TextEditingController aboutFoodController = TextEditingController();
+  final List<TextEditingController> stepsControllers = [
+    TextEditingController()
+  ];
+  final List<TextEditingController> ingredientsControllers = [
+    TextEditingController()
+  ];
+
+  String? selectedCategory;
 
   @override
   void initState() {
     super.initState();
+    fetchCategories().then((fetchedCategories) {
+      setState(() {
+        categories = fetchedCategories;
+      });
+    });
     // Fetch and display user data from storage
     fetchAndDisplayUserData();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCategories() async {
+    final response = await http.get(
+      Uri.parse('https://fine-pink-badger-yoke.cyclic.app/category'),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data
+          .map((category) => {
+                "id": category['id'],
+                "strCategory": category['strCategory'],
+              })
+          .toList();
+    } else {
+      throw Exception('Failed to load categories');
+    }
   }
 
   Future<void> fetchAndDisplayUserData() async {
@@ -53,77 +88,6 @@ class _CreateRecipeFormState extends State<CreateRecipeForm> {
     }
     return null;
   }
-
-  final TextEditingController nameController = TextEditingController();
-  File? selectedImageFile; // Variable to store the selected image file
-  final TextEditingController aboutFoodController = TextEditingController();
-  final List<TextEditingController> stepsControllers = [
-    TextEditingController()
-  ];
-  final List<TextEditingController> ingredientsControllers = [
-    TextEditingController()
-  ];
-
-  List<Map<String, String>> categories = [
-    {
-      "id": "clnxi17v30000zalwyu5uugig",
-      "strCategory": "Beef",
-    },
-    {
-      "id": "clnxi1x7o0001zalwc43xaw34",
-      "strCategory": "Chicken",
-    },
-    {
-      "id": "clnxi26ez0002zalwt5vxi291",
-      "strCategory": "Dessert",
-    },
-    {
-      "id": "clnxi2brm0003zalwaf0ytdt2",
-      "strCategory": "Lamb",
-    },
-    {
-      "id": "clnxi2hqv0004zalwxuri1bh9",
-      "strCategory": "Miscellaneous",
-    },
-    {
-      "id": "clnxi2mpl0005zalwsuk7iuht",
-      "strCategory": "Pasta",
-    },
-    {
-      "id": "clnxi2qh10006zalwinoyhdtx",
-      "strCategory": "Pork",
-    },
-    {
-      "id": "clnxi2uox0007zalwj38clpw3",
-      "strCategory": "Seafood",
-    },
-    {
-      "id": "clnxi2yty0008zalwym1sc4ia",
-      "strCategory": "Side",
-    },
-    {
-      "id": "clnxi33yt0009zalwcbh6k1t1",
-      "strCategory": "Starter",
-    },
-    {
-      "id": "clnxi38fa000azalw0h8ps3xs",
-      "strCategory": "Vegan",
-    },
-    {
-      "id": "clnxi3d2v000bzalwo9bc12sy",
-      "strCategory": "Vegetarian",
-    },
-    {
-      "id": "clnxi3kbv000czalwwjassnki",
-      "strCategory": "Breakfast",
-    },
-    {
-      "id": "clnxi3sjx000dzalwhvvpi1kx",
-      "strCategory": "Goat",
-    }
-  ];
-
-  String? selectedCategory;
 
   // String selectedCategory = ;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'login_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({Key? key}) : super(key: key);
@@ -33,6 +34,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return null;
   }
 
+  // Function to log out
+  Future<void> logOut() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userData');
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => const LoginPage()));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,10 +50,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app),
-            onPressed: () {
-              // log out function
-              Navigator.pop(context);
-            },
+            onPressed: logOut,
           ),
         ],
       ),
@@ -56,10 +62,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 80,
                         backgroundImage: NetworkImage(
-                          'https://i.pinimg.com/564x/4b/cc/54/4bcc54ebe6d0e6700e3df3047c1129c8.jpg',
+                          userData!['image'],
+                          scale: 80,
                         ),
                       ),
                       const SizedBox(height: 16.0),
@@ -82,12 +89,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 16.0),
-                ElevatedButton(
-                  onPressed: () {
-                    // edit profile function
-                  },
-                  child: const Text('Edit Profile'),
-                ),
               ],
             )
           : const Center(
